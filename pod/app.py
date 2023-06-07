@@ -2,6 +2,8 @@ import os
 import curses
 from pathlib import Path
 
+from file import Back, Entity
+
 
 KEY_UP = (curses.KEY_UP, 450)
 KEY_DOWN = (curses.KEY_DOWN, 456)
@@ -32,9 +34,20 @@ class App:
             self.screen.refresh()
             self.screen.getch()
 
-    def get_files(self) -> tuple[tuple[int, str]]:
-        files = ["< Go Back"] + os.listdir(self.cwd)
-        return tuple(enumerate(files))
+    def get_files(self) -> tuple[tuple[int, Back | Path]]:
+        back = [Back()]
+        ret: list[Entity] = []
+
+        try:
+            files = list(self.cwd.iterdir())
+        except PermissionError:
+            files = []
+
+        for file in files:
+            ret.append(Entity(file.name, is_file=file.is_file()))
+
+        ret = sorted(ret, key=lambda f: f.is_file)
+        return tuple(enumerate(back + ret))
 
     def draw_screen(self) -> None:
         self.screen.clear()
@@ -44,7 +57,7 @@ class App:
         self.maxy -= 4
         files = self.get_files()
 
-        self.screen.addnstr(y, 1, f"Current Directory: {str(self.cwd)}", maxx - 2)
+        self.screen.addnstr(y, 1, f"Current Directory: {self.cwd}", maxx - 2)
         y += 1
 
         files = files[self.offset:self.maxy + self.offset]
@@ -53,7 +66,7 @@ class App:
             y += 1
 
             if self.idx == idx:
-                self.selected = file
+                self.selected = file.name if not isinstance(file, Back) else file
                 file = f"{self.cursor} {file}"
             else:
                 file = f"{' ' * len(self.cursor)} {file}"
@@ -79,11 +92,11 @@ class App:
         if self.idx < len(self.get_files()) - 1:
             self.idx += 1
 
-            if self.screen_idx < self.maxy:
-                self.screen_idx += 1
-
-            if self.screen_idx > self.maxy - 1:
+            if self.screen_idx >= self.maxy - 1:
                 self.offset += 1
+
+            if self.screen_idx < self.maxy - 1:
+                self.screen_idx += 1
 
     def _run(self):
         while True:
@@ -99,14 +112,15 @@ class App:
 
             if key in ENTER:
                 if self.idx == 0:
-                    os.chdir(self.cwd.parent)
+                    selected = self.cwd.parent
                 else:
-                    selected = Path(self.cwd, self.selected)
+                    selected = self.cwd / self.selected
 
                     if selected.is_file():
                         continue
 
-                    os.chdir(selected)
+                os.chdir(selected)
+
                 self.cwd = Path(os.getcwd())
                 self.idx = 0
                 self.offset = 0
