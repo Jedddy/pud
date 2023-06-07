@@ -6,7 +6,7 @@ Pod is a mini command-line tool to navigate directories.
 Installation
 ===
 ```
-git clone https://github.com/Jedddy/pod
+git clone https://github.com/Jedddy/pod.git
 
 python setup.py install
 ```
