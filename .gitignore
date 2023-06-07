@@ -3,3 +3,8 @@
 
 # cache
 *.py[coa]
+
+# others
+build/
+*.egg-info
+dist

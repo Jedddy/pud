@@ -2,7 +2,7 @@ import os
 import curses
 from pathlib import Path
 
-from file import Back, Entity
+from .file import Back, Entity
 
 
 KEY_UP = (curses.KEY_UP, 450)
@@ -14,8 +14,8 @@ class App:
     selected: str
     screen: "curses._CursesWindow"
 
-    def __init__(self, cursor: str = "=>"):
-        self.cursor = cursor
+    def __init__(self, cursor: str):
+        self.cursor = cursor.strip()
         self.idx = 0
         self.offset = 0
         self.screen_idx = 0
@@ -34,9 +34,9 @@ class App:
             self.screen.refresh()
             self.screen.getch()
 
-    def get_files(self) -> tuple[tuple[int, Back | Path]]:
+    def get_files(self) -> tuple[tuple[int, Back | Path], ...]:
         back = [Back()]
-        ret: list[Entity] = []
+        ret = []
 
         try:
             files = list(self.cwd.iterdir())
@@ -66,12 +66,12 @@ class App:
             y += 1
 
             if self.idx == idx:
-                self.selected = file.name if not isinstance(file, Back) else file
-                file = f"{self.cursor} {file}"
+                self.selected = file.name if not isinstance(file, Back) else str(file)
+                file_display = f"{self.cursor} {file}"
             else:
-                file = f"{' ' * len(self.cursor)} {file}"
+                file_display = f"{' ' * len(self.cursor)} {file}"
 
-            self.screen.addnstr(y, 1, file, maxx - 2)
+            self.screen.addnstr(y, 1, file_display, maxx - 2)
 
         self.screen.refresh()
 
