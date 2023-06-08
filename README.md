@@ -14,9 +14,18 @@ python setup.py install
 Usage
 ===
 ```
-pod
+pod [arguments]
 
-# or
-
-pod --cursor="custom_cursor"
 ```
+
+Options
+===
+Currently there are 2 options:
+- cursor: The cursor you want to use.
+    ```
+    pod --cursor=">>>"
+    ```
+- no-keep-state: Whether not to keep the state of your cursor after entering/leaving a directory
+    ```
+    pod --no-keep-state
+    ```

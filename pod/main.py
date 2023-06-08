@@ -1,24 +1,14 @@
-import argparse
 import curses
+import sys
 
 from .app import App
+from .options import get_args
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        prog="pod",
-        allow_abbrev=False
-    )
+    args, _ = get_args(sys.argv[1:])
 
-    parser.add_argument(
-        "--cursor",
-        default="=>",
-        help="The cursor to use."
-    )
-
-    args = parser.parse_args()
-    print(args)
-    app = App(cursor=args.cursor)
+    app = App(cursor=args.cursor, keep_cursor_state=not args.no_keep_state)
     curses.wrapper(app)
 
 
