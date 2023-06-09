@@ -251,7 +251,10 @@ class App:
 
         if is_double_click:
             for name, c_x, c_y in self.coords:
-                if not x in c_x and y == c_y:
+                # Check if the coordinates clicked
+                # matches any of the folder coordinates on
+                # the screen.
+                if not (x in c_x and y == c_y):
                     continue
 
                 if name == "Back":
