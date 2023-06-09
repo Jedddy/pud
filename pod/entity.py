@@ -1,8 +1,22 @@
-class Back:
+class GoBack:
+    name = "Back"
+
     def __repr__(self) -> str:
-        return f"<<< Back"
+        return "<<< Go Back"
+
 
 class Entity:
+    """Represents an entity to display on the screen.
+
+    Attributes
+    ----------
+    name:
+        The name of the entity.
+
+    is_file:
+        Indicates if this entity is a file or not.
+    """
+
     def __init__(self, name: str, is_file: bool):
         self._name = name
         self._is_file = is_file
