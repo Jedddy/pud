@@ -1,4 +1,4 @@
-# For using python -m pod
+# For using python -m pud
 
 from pud.main import main
 

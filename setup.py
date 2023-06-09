@@ -19,7 +19,7 @@ setup(
     version="1.0.1",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/Jedddy/pod",
+    url="https://github.com/Jedddy/pud",
     author="Jedddy",
     packages=find_packages(),
     install_requires=requirements,
@@ -31,7 +31,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'pod = pod.main:main',
+            'pud = pud.main:main',
         ]
     }
 )

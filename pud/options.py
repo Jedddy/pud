@@ -4,7 +4,7 @@ from typing import Sequence
 
 def get_args(argv: Sequence[str]):
     parser = argparse.ArgumentParser(
-        prog="pod",
+        prog="pud",
         allow_abbrev=False
     )
 
