@@ -2,12 +2,14 @@ import os
 import curses
 from pathlib import Path
 
-from .file import Back, Entity
+from .entity import Entity, GoBack
 
 
 KEY_UP = (curses.KEY_UP, 450, ord('w'))
 KEY_DOWN = (curses.KEY_DOWN, 456, ord('s'))
 ENTER = (curses.KEY_ENTER, ord('\n'), ord('\r'))
+SCROLL_UP = (65536,)
+SCROLL_DOWN = (2097152,)
 
 
 class App:
@@ -45,9 +47,16 @@ class App:
 
     files:
         The list of files on the current working directory.
+
+    screen:
+        A curses window.
+
+    coords:
+        The coords of current file entries on the screen.
     """
 
     screen: "curses._CursesWindow"
+    coords: list[tuple[str, int, int]]
 
     def __init__(self, cursor: str, keep_cursor_state: bool):
         self.cursor = cursor.strip()
@@ -61,6 +70,7 @@ class App:
 
     def __call__(self, screen: "curses._CursesWindow"):
         curses.curs_set(0)
+        curses.mousemask(-1)
         screen.keypad(True)
         self.screen = screen
 
@@ -76,10 +86,10 @@ class App:
         self.offset = 0
         self.screen_idx = 0
 
-    def get_files(self) -> tuple[tuple[int, Back | Path], ...]:
+    def get_files(self) -> tuple[tuple[int, GoBack | Entity], ...]:
         """Gets all the files from the current working directory and stores it in a list."""
 
-        back = [Back()]
+        back = [GoBack()]
         ret = []
 
         try:
@@ -107,10 +117,13 @@ class App:
         self.maxy -= 4
         files = self.get_files()
 
-        self.screen.addnstr(y, 1, f"Current Directory: {self.cwd}", maxx - 2)
+        self.screen.addstr(y, 1, f"Current Directory: {self.cwd}")
+        y += 1
+        self.screen.addstr(y, 1, "Press CTRL + C or Esc or q to exit.")
         y += 1
 
         files = files[self.offset:self.maxy + self.offset]
+        coords = []
 
         for idx, file in files:
             y += 1
@@ -121,7 +134,9 @@ class App:
                 file_display = f"{' ' * len(self.cursor)} {file}"
 
             self.screen.addnstr(y, 1, file_display, maxx - 2)
+            coords.append((file.name, range(1, len(file_display)), y))
 
+        self.coords = coords
         self.screen.refresh()
 
     def get_key(self) -> str | int:
@@ -167,12 +182,21 @@ class App:
 
         return self.cursor_stack[0]
 
+    def refresh_cwd(self):
+        """Refreshes the current working directory."""
+
+        self.cwd = Path().cwd()
+        self.files = self.get_files()
+
     def execute_by_key(self, key: int) -> None:
         """Executes an action based on the key.
 
         key:
             The key returned by `get_key`.
         """
+
+        if key in (27, ord('q')):  # Esc key or 'q'
+            raise SystemExit()
 
         if key in KEY_UP:
             self.move_up()
@@ -215,8 +239,41 @@ class App:
 
                 self.reset_state()
 
-            self.cwd = Path().cwd()
-            self.files = self.get_files()
+        self.refresh_cwd()
+
+    def handle_mouse_event(self) -> None:
+        """Handles a mouse event."""
+
+        clicked = None
+        _, x, y, _, bstate = curses.getmouse()
+
+        is_double_click = bstate & curses.BUTTON1_DOUBLE_CLICKED
+
+        if is_double_click:
+            for name, c_x, c_y in self.coords:
+                if not x in c_x and y == c_y:
+                    continue
+
+                if name == "Back":
+                    clicked = self.cwd.parent
+                    break
+
+                clicked = self.cwd / name
+
+                if clicked.is_file():
+                    return
+
+                self.reset_state()
+
+            if clicked:
+                os.chdir(clicked)
+                self.refresh_cwd()
+
+        if bstate in SCROLL_UP:
+            self.move_up()
+
+        if bstate in SCROLL_DOWN:
+            self.move_down()
 
     def _run(self):
         """Starts the loop to run the app."""
@@ -224,4 +281,9 @@ class App:
         while True:
             self.draw_screen()
             key = self.get_key()
+
+            if key == curses.KEY_MOUSE:
+                self.handle_mouse_event()
+                continue
+
             self.execute_by_key(key)
