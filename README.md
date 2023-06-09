@@ -1,12 +1,12 @@
 
-Pod
+Pud
 ===
-Pod is a mini command-line tool to navigate directories.
+Pud is a mini command-line tool to navigate directories.
 
 Installation
 ===
 ```
-git clone https://github.com/Jedddy/pod.git
+git clone https://github.com/Jedddy/pud.git
 
 python setup.py install
 ```
@@ -14,8 +14,7 @@ python setup.py install
 Usage
 ===
 ```
-pod [arguments]
-
+pud [arguments]
 ```
 
 Options
@@ -23,9 +22,9 @@ Options
 Currently there are 2 options:
 - cursor: The cursor you want to use.
     ```
-    pod --cursor=">>>"
+    pud --cursor=">>>"
     ```
 - no-keep-state: Whether not to keep the state of your cursor after entering/leaving a directory
     ```
-    pod --no-keep-state
+    pud --no-keep-state
     ```
