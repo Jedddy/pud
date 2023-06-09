@@ -1,6 +1,6 @@
 import os
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 with open("README.md", "r") as readme, \
@@ -14,15 +14,21 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
 
 setup(
-    name="pod",
+    name="pud",
     description="A command-line tool for navigating directories.",
-    version="0.1.0",
+    version="1.0.1",
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/Jedddy/pod",
     author="Jedddy",
-    packages=["pod"],
+    packages=find_packages(),
     install_requires=requirements,
+    python_requires=">=3.9",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
     entry_points={
         'console_scripts': [
             'pod = pod.main:main',
