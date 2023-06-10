@@ -40,9 +40,8 @@ class App:
     cursor_stack:
         The cursor stack used to 'remember' the past cursor placement before
         entering a new directory. It is a tuple of 4 items.
-        (part, offset, index, screen_index)
+        (offset, index, screen_index)
 
-        `part` is the folder name.
         `offset` is the offset of the display screen from the top of the file list.
         `index` is the index of the cursor.
         `screen_index` is the index of the cursor on the screen.
@@ -67,7 +66,7 @@ class App:
         self.offset = 0
         self.screen_idx = 0
         self.cwd = Path().cwd()
-        self.cursor_stack = [(part, 0, 0, 0) for part in self.cwd.parts]
+        self.cursor_stack = [(0, 0, 0) for part in self.cwd.parts]
         self.files = self.get_files()
 
     def __call__(self, screen: "curses._CursesWindow"):
@@ -213,7 +212,7 @@ class App:
                 os.chdir(selected)
 
                 if self.keep_cursor_state:
-                    _, offset, index, screen_index = self.pop_cursor_stack()
+                    offset, index, screen_index = self.pop_cursor_stack()
 
                     self.offset = offset
                     self.idx = index
@@ -225,11 +224,10 @@ class App:
                 if selected.is_file():
                     return
 
-                state = (None, None, None, None)
+                state = (0, 0, 0)
 
                 if self.keep_cursor_state:
                     state = (
-                        self.cwd.name,
                         self.offset,
                         self.idx,
                         self.screen_idx
