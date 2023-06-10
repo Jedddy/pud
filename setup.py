@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 setup(
     name="pud",
     description="A command-line tool for navigating directories.",
-    version="1.0.2",
+    version="1.0.3",
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/Jedddy/pud",

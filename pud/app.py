@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import os
 import curses
 from pathlib import Path
 
 from .entity import Entity, GoBack
+from .handlers import DirectoryExplorer
 
 
 KEY_UP = (curses.KEY_UP, 450, ord('w'))
@@ -34,20 +34,17 @@ class App:
     screen_idx:
         The index of the cursor on the screen.
 
-    cwd:
-        The current working directory.
+    explorer:
+        The directory handler.
 
     cursor_stack:
         The cursor stack used to 'remember' the past cursor placement before
-        entering a new directory. It is a tuple of 4 items.
+        entering a new directory. It is a tuple of 3 items.
         (offset, index, screen_index)
 
         `offset` is the offset of the display screen from the top of the file list.
         `index` is the index of the cursor.
         `screen_index` is the index of the cursor on the screen.
-
-    files:
-        The list of files on the current working directory.
 
     screen:
         A curses window.
@@ -65,9 +62,8 @@ class App:
         self.idx = 0
         self.offset = 0
         self.screen_idx = 0
-        self.cwd = Path().cwd()
-        self.cursor_stack = [(0, 0, 0) for part in self.cwd.parts]
-        self.files = self.get_files()
+        self.explorer = DirectoryExplorer(Path().cwd())
+        self.cursor_stack = [(0, 0, 0) for _ in self.explorer.cwd.parts]
 
     def __call__(self, screen: "curses._CursesWindow"):
         curses.curs_set(0)
@@ -91,21 +87,15 @@ class App:
         """Gets all the files from the current working directory and stores it in a list."""
 
         back = [GoBack()]
-        ret = []
+        files = self.explorer.list_files()
 
-        try:
-            files = list(self.cwd.iterdir())
-        except PermissionError:
+        if files is None:
+            files = []
             message = "Permission Denied."
             maxy, maxx = self.screen.getmaxyx()
-            files = []
-
             self.screen.addstr(maxy // 2, (maxx // 2) - (len(message) // 2), message)
 
-        for file in files:
-            ret.append(Entity(file.name, is_file=file.is_file()))
-
-        ret = sorted(ret, key=lambda f: f.is_file)
+        ret = sorted(files, key=lambda f: f.is_file)
         return tuple(enumerate(back + ret))
 
     def draw_screen(self) -> None:
@@ -118,7 +108,7 @@ class App:
         self.maxy -= 4
         files = self.get_files()
 
-        self.screen.addstr(y, 1, f"Current Directory: {self.cwd}")
+        self.screen.addstr(y, 1, f"Current Directory: {self.explorer.cwd}")
         y += 1
         self.screen.addstr(y, 1, "Press CTRL + C or Esc or q to exit.")
         y += 1
@@ -166,7 +156,7 @@ class App:
         This makes the cursor go down.
         """
 
-        if self.idx < len(self.files) - 1:
+        if self.idx < len(self.get_files()) - 1:
             self.idx += 1
 
             if self.screen_idx >= self.maxy - 1:
@@ -182,12 +172,6 @@ class App:
             return self.cursor_stack.pop()
 
         return self.cursor_stack[0]
-
-    def refresh_cwd(self):
-        """Refreshes the current working directory."""
-
-        self.cwd = Path().cwd()
-        self.files = self.get_files()
 
     def execute_by_key(self, key: int) -> None:
         """Executes an action based on the key.
@@ -207,9 +191,7 @@ class App:
 
         if key in ENTER:
             if self.idx == 0:
-                selected = self.cwd.parent
-
-                os.chdir(selected)
+                self.explorer.go_back()
 
                 if self.keep_cursor_state:
                     offset, index, screen_index = self.pop_cursor_stack()
@@ -219,9 +201,12 @@ class App:
                     self.screen_idx = screen_index
 
             else:
-                selected = self.cwd / str(self.files[self.idx][1].name)
+                files = self.get_files()
+                selected = files[self.idx][1].name
 
-                if selected.is_file():
+                entered = self.explorer.enter(selected)
+
+                if not entered:
                     return
 
                 state = (0, 0, 0)
@@ -234,17 +219,11 @@ class App:
                     )
 
                 self.cursor_stack.append(state)
-
-                os.chdir(selected)
-
                 self.reset_state()
-
-        self.refresh_cwd()
 
     def handle_mouse_event(self) -> None:
         """Handles a mouse event."""
 
-        clicked = None
         _, x, y, _, bstate = curses.getmouse()
 
         is_double_click = bstate & curses.BUTTON1_DOUBLE_CLICKED
@@ -258,19 +237,11 @@ class App:
                     continue
 
                 if name == "Back":
-                    clicked = self.cwd.parent
+                    self.explorer.go_back()
                     break
 
-                clicked = self.cwd / name
-
-                if clicked.is_file():
-                    return
-
+                self.explorer.enter(name)
                 self.reset_state()
-
-            if clicked:
-                os.chdir(clicked)
-                self.refresh_cwd()
 
         if bstate in SCROLL_UP:
             self.move_up()
