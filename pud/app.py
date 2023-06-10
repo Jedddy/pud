@@ -57,7 +57,7 @@ class App:
     """
 
     screen: "curses._CursesWindow"
-    coords: list[tuple[str, int, int]]
+    coords: list[tuple[str, range, int]]
 
     def __init__(self, cursor: str, keep_cursor_state: bool):
         self.cursor = cursor.strip()
@@ -140,7 +140,7 @@ class App:
         self.coords = coords
         self.screen.refresh()
 
-    def get_key(self) -> str | int:
+    def get_key(self) -> int:
         """Returns a pressed key."""
 
         return self.screen.getch()
