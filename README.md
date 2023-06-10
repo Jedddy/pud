@@ -1,10 +1,20 @@
-
 Pud
 ===
+
+![PyPI](https://img.shields.io/pypi/v/pud)
+![PyPI - Downloads](https://img.shields.io/pypi/dd/pud)
+
+
 Pud is a mini command-line tool to navigate directories.
 
 Installation
 ===
+PIP:
+```
+pip install pud
+```
+
+GIT (Dev Version):
 ```
 git clone https://github.com/Jedddy/pud.git
 
