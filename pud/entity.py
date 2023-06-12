@@ -15,6 +15,8 @@ def _parse_bytes(byte_cnt: int) -> str:
 
 class GoBack:
     name = "Back"
+    size = ""
+    last_modified = ""
 
     def __repr__(self) -> str:
         return "<<< Go Back"
