@@ -30,8 +30,15 @@ class Entity:
     name:
         The name of the entity.
 
+    size:
+        The human readable size of the entity.
+
     is_file:
         Indicates if this entity is a file or not.
+
+    last_modified:
+        The human readable representation of the date
+        when this entity was last modified.
     """
 
     def __init__(
