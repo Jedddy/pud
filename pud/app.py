@@ -9,11 +9,11 @@ from .handlers import DirectoryExplorer
 
 KEY_UP = (curses.KEY_UP, 450, ord('w'))
 KEY_DOWN = (curses.KEY_DOWN, 456, ord('s'))
-ENTER = (curses.KEY_ENTER, 454, ord('\n'), ord('\r'), ord('d'))
+ENTER = (curses.KEY_ENTER, curses.KEY_RIGHT, 454, ord('\n'), ord('\r'), ord('d'))
 SCROLL_UP = (65536,)
 SCROLL_DOWN = (2097152,)
 QUIT = (27, ord('q'))
-GO_BACK = (ord('b'), ord('a'), 452)
+GO_BACK = (curses.KEY_LEFT, 452, 260, ord('b'), ord('a'))
 
 
 class App:
@@ -317,7 +317,7 @@ class App:
         while True:
             self.draw_screen()
             key = self.get_key()
-
+            print(key)
             if key == curses.KEY_MOUSE:
                 self.handle_mouse_event()
                 continue
