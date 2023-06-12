@@ -3,15 +3,17 @@ from __future__ import annotations
 import curses
 from pathlib import Path
 
-from .entity import Entity, GoBack
+from .entity import Entity
 from .handlers import DirectoryExplorer
 
 
 KEY_UP = (curses.KEY_UP, 450, ord('w'))
 KEY_DOWN = (curses.KEY_DOWN, 456, ord('s'))
-ENTER = (curses.KEY_ENTER, ord('\n'), ord('\r'))
+ENTER = (curses.KEY_ENTER, 454, ord('\n'), ord('\r'), ord('d'))
 SCROLL_UP = (65536,)
 SCROLL_DOWN = (2097152,)
+QUIT = (27, ord('q'))
+GO_BACK = (ord('b'), ord('a'), 452)
 
 
 class App:
@@ -68,6 +70,8 @@ class App:
     def __call__(self, screen: "curses._CursesWindow"):
         curses.curs_set(0)
         curses.mousemask(-1)
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
         screen.keypad(True)
         self.screen = screen
 
@@ -83,10 +87,9 @@ class App:
         self.offset = 0
         self.screen_idx = 0
 
-    def get_files(self) -> tuple[tuple[int, GoBack | Entity], ...]:
+    def get_files(self) -> tuple[tuple[int, Entity], ...]:
         """Gets all the files from the current working directory and stores it in a list."""
 
-        back = [GoBack()]
         files = self.explorer.list_files()
 
         if files is None:
@@ -95,8 +98,51 @@ class App:
             maxy, maxx = self.screen.getmaxyx()
             self.screen.addstr(maxy // 2, (maxx // 2) - (len(message) // 2), message)
 
+        elif len(files) == 0:
+            message = "Directory Empty."
+            self.maxy, maxx = self.screen.getmaxyx()
+            self.screen.addstr(self.maxy // 2, (maxx // 2) - (len(message) // 2), message)
+
         ret = sorted(files, key=lambda f: f.is_file)
-        return tuple(enumerate(back + ret))
+        return tuple(enumerate(ret))
+
+    def show_help(self):
+        """Shows the help window."""
+
+        maxy, maxx = self.screen.getmaxyx()
+        size_y, size_x = maxy // 2, maxx // 2
+        win = curses.newwin(size_y, size_x, maxy // 4 , maxx // 4)
+        win.bkgd(" ", curses.color_pair(1))
+        win.box()
+
+        win_maxy, win_maxx = win.getmaxyx()
+
+        win.addstr(0, (win_maxx // 2) - 2, "Help")
+        action_col = win_maxx // 2
+
+        y = 1
+        win.addstr(y, 1, "KEY")
+        win.addstr(y, action_col, "ACTION")
+        y += 1
+
+        help_comb = [
+            ("up, w", "Move up"),
+            ("down, s", "Move down"),
+            ("enter, right, a", "Enter directory"),
+            ("b, left, d", "Go to parent directory"),
+            ("esc, q", "Exit")
+        ]
+
+        for y, (key, action) in zip(range(1, win_maxy - 1), help_comb):
+            win.addstr(y, 1, key)
+            win.addstr(y, action_col, action)
+
+        while True:
+            key = win.getch()
+
+            if key in (27, ord('q')):
+                curses.endwin()
+                break
 
     def draw_screen(self) -> None:
         """Draws all the folders/files into the screen."""
@@ -108,16 +154,17 @@ class App:
         self.maxy -= 4
         files = self.get_files()
 
-        self.screen.addstr(y, 1, f"Current Directory: {self.explorer.cwd}")
+        self.screen.addstr(y, 1, "Press ? to show help window. Esc or q to exit.")
         y += 1
-        self.screen.addstr(y, 1, "Press CTRL + C or Esc or q to exit.")
+
+        self.screen.addstr(y, 1, f"Current Directory: {self.explorer.cwd}", curses.A_STANDOUT)
         y += 2
 
         self.screen.addstr(y, 4, "File Name")
         self.screen.addstr(y, maxx // 3, "File Size")
         self.screen.addstr(y, maxx // 2, "Last Modified")
 
-        files = files[self.offset:self.maxy + self.offset]
+        files = files[self.offset:(self.maxy + self.offset) - 2]
         coords = []
 
         for idx, file in files:
@@ -168,10 +215,10 @@ class App:
         if self.idx < len(self.get_files()) - 1:
             self.idx += 1
 
-            if self.screen_idx >= self.maxy - 1:
+            if self.screen_idx >= self.maxy - 3:
                 self.offset += 1
 
-            if self.screen_idx < self.maxy - 1:
+            if self.screen_idx < self.maxy - 3:
                 self.screen_idx += 1
 
     def pop_cursor_stack(self):
@@ -189,8 +236,21 @@ class App:
             The key returned by `get_key`.
         """
 
-        if key in (27, ord('q')):  # Esc key or 'q'
+        if key in QUIT:  # Esc key or 'q'
             raise SystemExit()
+
+        if key in (ord('?'),):
+            self.show_help()
+
+        if key in GO_BACK:
+            self.explorer.go_back()
+
+            if self.keep_cursor_state:
+                offset, index, screen_index = self.pop_cursor_stack()
+
+                self.offset = offset
+                self.idx = index
+                self.screen_idx = screen_index
 
         if key in KEY_UP:
             self.move_up()
@@ -199,36 +259,29 @@ class App:
             self.move_down()
 
         if key in ENTER:
-            if self.idx == 0:
-                self.explorer.go_back()
+            files = self.get_files()
 
-                if self.keep_cursor_state:
-                    offset, index, screen_index = self.pop_cursor_stack()
+            if not files:
+                return
 
-                    self.offset = offset
-                    self.idx = index
-                    self.screen_idx = screen_index
+            selected = files[self.idx][1].name
 
-            else:
-                files = self.get_files()
-                selected = files[self.idx][1].name
+            entered = self.explorer.enter(selected)
 
-                entered = self.explorer.enter(selected)
+            if not entered:
+                return
 
-                if not entered:
-                    return
+            state = (0, 0, 0)
 
-                state = (0, 0, 0)
+            if self.keep_cursor_state:
+                state = (
+                    self.offset,
+                    self.idx,
+                    self.screen_idx
+                )
 
-                if self.keep_cursor_state:
-                    state = (
-                        self.offset,
-                        self.idx,
-                        self.screen_idx
-                    )
-
-                self.cursor_stack.append(state)
-                self.reset_state()
+            self.cursor_stack.append(state)
+            self.reset_state()
 
     def handle_mouse_event(self) -> None:
         """Handles a mouse event."""
