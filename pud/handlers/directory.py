@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from pathlib import Path
 
 from ..entity import Entity
@@ -54,7 +55,20 @@ class DirectoryExplorer:
         """Lists all the files in the current directory."""
 
         try:
-            files = [Entity(entity.name, entity.is_file()) for entity in self.cwd.iterdir()]
+            files = []
+
+            for entity in self.cwd.iterdir():
+                stats = entity.stat()
+                last_modified = datetime.fromtimestamp(stats.st_mtime)
+                files.append(
+                    Entity(
+                        entity.name,
+                        stats.st_size,
+                        entity.is_file(),
+                        last_modified.strftime("%x %I:%M:%S")
+                    )
+                )
+
         except PermissionError:
             files = None
 

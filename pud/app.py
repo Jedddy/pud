@@ -111,7 +111,11 @@ class App:
         self.screen.addstr(y, 1, f"Current Directory: {self.explorer.cwd}")
         y += 1
         self.screen.addstr(y, 1, "Press CTRL + C or Esc or q to exit.")
-        y += 1
+        y += 2
+
+        self.screen.addstr(y, 4, "File Name")
+        self.screen.addstr(y, maxx // 3, "File Size")
+        self.screen.addstr(y, maxx // 2, "Last Modified")
 
         files = files[self.offset:self.maxy + self.offset]
         coords = []
@@ -119,12 +123,17 @@ class App:
         for idx, file in files:
             y += 1
 
+            if len(file.name) > 29:
+                file.name = f"{file.name[:29]}..."
+
             if self.idx == idx:
                 file_display = f"{self.cursor} {file}"
             else:
                 file_display = f"{' ' * len(self.cursor)} {file}"
 
             self.screen.addnstr(y, 1, file_display, maxx - 2)
+            self.screen.addnstr(y, maxx // 3, file.size, maxx - 2)
+            self.screen.addnstr(y, maxx // 2, file.last_modified, maxx - 2)
             coords.append((file.name, range(1, len(file_display)), y))
 
         self.coords = coords
