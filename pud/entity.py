@@ -12,16 +12,6 @@ def _parse_bytes(byte_cnt: int) -> str:
 
     return f"{byte_cnt:.1f}{units[i]}"
 
-
-class GoBack:
-    name = "Back"
-    size = ""
-    last_modified = ""
-
-    def __repr__(self) -> str:
-        return "<<< Go Back"
-
-
 class Entity:
     """Represents an entity to display on the screen.
 
