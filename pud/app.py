@@ -111,7 +111,7 @@ class App:
 
         maxy, maxx = self.screen.getmaxyx()
         size_y, size_x = maxy // 2, maxx // 2
-        win = curses.newwin(size_y, size_x, maxy // 4, maxx // 4)
+        win = curses.newwin(size_y, int(size_x * 1.50), size_y // 2, size_x // 4)
         win.box()
         win_maxy, win_maxx = win.getmaxyx()
         return win, win_maxy, win_maxx
@@ -122,13 +122,8 @@ class App:
         win, win_maxy, win_maxx = self.create_window()
         win.box()
 
-        win.addstr(0, (win_maxx // 2) - 2, "Help")
+        win.addstr(0, (win_maxx // 2) - 2, "Help", curses.A_STANDOUT)
         action_col = win_maxx // 2
-
-        y = 1
-        win.addstr(y, 1, "KEY")
-        win.addstr(y, action_col, "ACTION")
-        y += 1
 
         help_comb = [
             ("up, w", "Move up"),
@@ -156,15 +151,20 @@ class App:
         item = Path(self.explorer.cwd, entity.name)
 
         try:
+            if entity.is_file:
+                size = entity.size
+            else:
+                size = parse_bytes(get_dir_size(item))
+
             infos = (
                 f"Path: {str(item)}",
                 f"Name: {entity.name}",
                 f"Type: {['Folder', 'File'][entity.is_file]}",
-                f"Size: {parse_bytes(get_dir_size(item))}",
+                f"Size: {size}",
                 f"Last Modified: {entity.last_modified}",
             )
 
-            win.addstr(0, (win_maxx // 2) - 2, "Info")
+            win.addstr(0, (win_maxx // 2) - 2, "Info", curses.A_STANDOUT)
 
             for y, info in zip(range(1, win_maxy - 1), infos):
                 win.addstr(y, 1, info)
