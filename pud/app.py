@@ -5,11 +5,13 @@ from pathlib import Path
 
 from .entity import Entity
 from .handlers import DirectoryExplorer
+from .utils import get_dir_size, parse_bytes
 
 
 KEY_UP = (curses.KEY_UP, 450, ord('w'))
 KEY_DOWN = (curses.KEY_DOWN, 456, ord('s'))
 ENTER = (curses.KEY_ENTER, curses.KEY_RIGHT, 454, ord('\n'), ord('\r'), ord('d'))
+GET_INFO = (9,)
 SCROLL_UP = (65536,)
 SCROLL_DOWN = (2097152,)
 QUIT = (27, ord('q'))
@@ -70,8 +72,6 @@ class App:
     def __call__(self, screen: "curses._CursesWindow"):
         curses.curs_set(0)
         curses.mousemask(-1)
-        curses.start_color()
-        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
         screen.keypad(True)
         self.screen = screen
 
@@ -106,16 +106,21 @@ class App:
         ret = sorted(files, key=lambda f: f.is_file)
         return tuple(enumerate(ret))
 
-    def show_help(self):
-        """Shows the help window."""
+    def create_window(self) -> tuple["curses._CursesWindow", int, int]:
+        """Creates a new top level window."""
 
         maxy, maxx = self.screen.getmaxyx()
         size_y, size_x = maxy // 2, maxx // 2
-        win = curses.newwin(size_y, size_x, maxy // 4 , maxx // 4)
-        win.bkgd(" ", curses.color_pair(1))
+        win = curses.newwin(size_y, size_x, maxy // 4, maxx // 4)
         win.box()
-
         win_maxy, win_maxx = win.getmaxyx()
+        return win, win_maxy, win_maxx
+
+    def show_help(self) -> None:
+        """Shows the help window."""
+
+        win, win_maxy, win_maxx = self.create_window()
+        win.box()
 
         win.addstr(0, (win_maxx // 2) - 2, "Help")
         action_col = win_maxx // 2
@@ -140,8 +145,34 @@ class App:
         while True:
             key = win.getch()
 
-            if key in (27, ord('q')):
-                curses.endwin()
+            if key in QUIT:
+                win.erase()
+                break
+
+    def show_info(self, entity: Entity) -> None:
+        """Shows the info window."""
+
+        win, win_maxy, win_maxx = self.create_window()
+        item = Path(self.explorer.cwd, entity.name)
+
+        infos = (
+            f"Path: {str(item)}",
+            f"Name: {entity.name}",
+            f"Type: {['Folder', 'File'][entity.is_file]}",
+            f"Size: {parse_bytes(get_dir_size(item))}",
+            f"Last Modified: {entity.last_modified}",
+        )
+
+        win.addstr(0, (win_maxx // 2) - 2, "Info")
+
+        for y, info in zip(range(1, win_maxy - 1), infos):
+            win.addstr(y, 1, info)
+
+        while True:
+            key = win.getch()
+
+            if key in QUIT:
+                win.erase()
                 break
 
     def draw_screen(self) -> None:
@@ -157,7 +188,7 @@ class App:
         self.screen.addstr(y, 1, "Press ? to show help window. Esc or q to exit.")
         y += 1
 
-        self.screen.addstr(y, 1, f"Current Directory: {self.explorer.cwd}", curses.A_STANDOUT)
+        self.screen.addstr(y, 1, f"Current Directory: {self.explorer.cwd}")
         y += 2
 
         self.screen.addstr(y, 4, "File Name")
@@ -185,11 +216,6 @@ class App:
 
         self.coords = coords
         self.screen.refresh()
-
-    def get_key(self) -> int:
-        """Returns a pressed key."""
-
-        return self.screen.getch()
 
     def move_up(self) -> None:
         """Adjusts the indexes and offset if possible.
@@ -233,7 +259,7 @@ class App:
         """Executes an action based on the key.
 
         key:
-            The key returned by `get_key`.
+            The key returned by `getch`.
         """
 
         if key in QUIT:  # Esc key or 'q'
@@ -241,6 +267,9 @@ class App:
 
         if key in (ord('?'),):
             self.show_help()
+
+        if key in GET_INFO:
+            self.show_info(self.get_files()[self.idx][1])
 
         if key in GO_BACK:
             self.explorer.go_back()
@@ -316,8 +345,8 @@ class App:
 
         while True:
             self.draw_screen()
-            key = self.get_key()
-            print(key)
+            key = self.screen.getch()
+
             if key == curses.KEY_MOUSE:
                 self.handle_mouse_event()
                 continue

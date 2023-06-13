@@ -5,20 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from ..entity import Entity
-
-
-def _parse_bytes(byte_cnt: int) -> str:
-    """Parses byte count to a human readable format."""
-
-    units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-
-    i = 0
-
-    while byte_cnt > 1024:
-        byte_cnt /= 1024
-        i += 1
-
-    return f"{byte_cnt:.1f}{units[i]}"
+from ..utils import parse_bytes
 
 
 class DirectoryExplorer:
@@ -77,7 +64,7 @@ class DirectoryExplorer:
                 files.append(
                     Entity(
                         entity.name,
-                        _parse_bytes(stats.st_size),
+                        parse_bytes(stats.st_size),
                         entity.is_file(),
                         last_modified.strftime("%x %I:%M:%S")
                     )
