@@ -155,18 +155,24 @@ class App:
         win, win_maxy, win_maxx = self.create_window()
         item = Path(self.explorer.cwd, entity.name)
 
-        infos = (
-            f"Path: {str(item)}",
-            f"Name: {entity.name}",
-            f"Type: {['Folder', 'File'][entity.is_file]}",
-            f"Size: {parse_bytes(get_dir_size(item))}",
-            f"Last Modified: {entity.last_modified}",
-        )
+        try:
+            infos = (
+                f"Path: {str(item)}",
+                f"Name: {entity.name}",
+                f"Type: {['Folder', 'File'][entity.is_file]}",
+                f"Size: {parse_bytes(get_dir_size(item))}",
+                f"Last Modified: {entity.last_modified}",
+            )
 
-        win.addstr(0, (win_maxx // 2) - 2, "Info")
+            win.addstr(0, (win_maxx // 2) - 2, "Info")
 
-        for y, info in zip(range(1, win_maxy - 1), infos):
-            win.addstr(y, 1, info)
+            for y, info in zip(range(1, win_maxy - 1), infos):
+                win.addstr(y, 1, info)
+
+        except PermissionError:
+            message = "Permission Denied. Press Q to close."
+            win_maxy, win_maxx = win.getmaxyx()
+            win.addstr(win_maxy // 2, (win_maxx // 2) - (len(message) // 2), message)
 
         while True:
             key = win.getch()
