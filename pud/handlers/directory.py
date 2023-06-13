@@ -7,6 +7,20 @@ from pathlib import Path
 from ..entity import Entity
 
 
+def _parse_bytes(byte_cnt: int) -> str:
+    """Parses byte count to a human readable format."""
+
+    units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+
+    i = 0
+
+    while byte_cnt > 1024:
+        byte_cnt /= 1024
+        i += 1
+
+    return f"{byte_cnt:.1f}{units[i]}"
+
+
 class DirectoryExplorer:
     """The directory handler responsible for entering and leaving directories.
 
@@ -63,7 +77,7 @@ class DirectoryExplorer:
                 files.append(
                     Entity(
                         entity.name,
-                        stats.st_size,
+                        _parse_bytes(stats.st_size),
                         entity.is_file(),
                         last_modified.strftime("%x %I:%M:%S")
                     )

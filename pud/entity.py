@@ -1,17 +1,6 @@
 from datetime import datetime
 
 
-def _parse_bytes(byte_cnt: int) -> str:
-    units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-
-    i = 0
-
-    while byte_cnt > 1024:
-        byte_cnt /= 1024
-        i += 1
-
-    return f"{byte_cnt:.1f}{units[i]}"
-
 class Entity:
     """Represents an entity to display on the screen.
 
@@ -34,12 +23,12 @@ class Entity:
     def __init__(
         self,
         name: str,
-        size: int,
+        size: str,
         is_file: bool,
         last_modified: datetime,
     ):
         self._name = name
-        self._size = _parse_bytes(size)
+        self._size = size
         self._is_file = is_file
         self._last_modified = last_modified
 
