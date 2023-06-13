@@ -2,7 +2,18 @@ from pathlib import Path
 
 
 def parse_bytes(byte_cnt: int) -> str:
-    """Parses byte count to a human readable format."""
+    """Parses byte count to a human readable format.
+
+    Parameters
+    ----------
+    byte_cnt:
+        The total byte count to parse.
+
+    Returns
+    ----------
+    str:
+        The human readable format of the byte count.
+    """
 
     units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
@@ -15,8 +26,19 @@ def parse_bytes(byte_cnt: int) -> str:
     return f"{byte_cnt:.1f}{units[i]}"
 
 
-def get_dir_size(directory: Path) -> str:
-    """Gets the total directory size."""
+def get_dir_size(directory: Path) -> int:
+    """Recursively gets the total directory size.
+
+    Parameters
+    ----------
+    directory:
+        The directory to traverse and check.
+
+    Returns
+    ----------
+    int:
+        The total size of the directory in bytes.
+    """
 
     size = 0
 

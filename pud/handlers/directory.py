@@ -16,6 +16,7 @@ class DirectoryExplorer:
     cwd:
         The current working directory.
     """
+
     def __init__(self, cwd: Path) -> None:
         self.cwd = cwd
 
