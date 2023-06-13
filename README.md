@@ -2,7 +2,6 @@ Pud
 ===
 
 ![PyPI](https://img.shields.io/pypi/v/pud)
-![PyPI - Downloads](https://img.shields.io/pypi/dd/pud)
 
 
 Pud is a mini command-line tool to navigate directories.
@@ -25,6 +24,13 @@ Usage
 ===
 ```
 pud [arguments]
+```
+
+Shortcuts
+===
+```
+[?] - Show help
+[ctrl + i] - Show file or folder info
 ```
 
 Options
