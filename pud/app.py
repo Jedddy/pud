@@ -198,9 +198,12 @@ class App:
         self.screen.addstr(y, 1, f"Current Directory: {self.explorer.cwd}")
         y += 2
 
+        f_size_x = (maxx // 2) - 9  # Placement of file size
+        f_modified_x = maxx - 19  # Placement of last modified date
+
         self.screen.addstr(y, 4, "File Name")
-        self.screen.addstr(y, maxx // 3, "File Size")
-        self.screen.addstr(y, maxx // 2, "Last Modified")
+        self.screen.addstr(y, f_size_x, "File Size")
+        self.screen.addstr(y, f_modified_x, "Last Modified")
 
         files = files[self.offset:(self.maxy + self.offset) - 2]
         coords = []
@@ -217,8 +220,8 @@ class App:
                 file_display = f"{' ' * len(self.cursor)} {file}"
 
             self.screen.addnstr(y, 1, file_display, maxx - 2)
-            self.screen.addnstr(y, maxx // 3, file.size, maxx - 2)
-            self.screen.addnstr(y, maxx // 2, file.last_modified, maxx - 2)
+            self.screen.addnstr(y, f_size_x, file.size, maxx)
+            self.screen.addnstr(y, f_modified_x, file.last_modified, maxx)
             coords.append((file.name, range(1, len(file_display)), y))
 
         self.coords = coords
