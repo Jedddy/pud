@@ -130,6 +130,7 @@ class App:
             ("down, s", "Move down"),
             ("enter, right, a", "Enter directory"),
             ("b, left, d", "Go to parent directory"),
+            ("ctrl + i", "Show information"),
             ("esc, q", "Exit")
         ]
 
@@ -332,10 +333,6 @@ class App:
                 # the screen.
                 if not (x in c_x and y == c_y):
                     continue
-
-                if name == "Back":
-                    self.explorer.go_back()
-                    break
 
                 self.explorer.enter(name)
                 self.reset_state()
