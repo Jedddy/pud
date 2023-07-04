@@ -236,7 +236,7 @@ class App:
         if self.idx > 0:
             self.idx -= 1
 
-        if self.idx < self.offset and self.idx >= 0:
+        if self.idx < self.offset:
             self.offset -= 1
 
         if self.screen_idx > 0:
@@ -257,7 +257,7 @@ class App:
             if self.screen_idx < self.maxy - 3:
                 self.screen_idx += 1
 
-    def pop_cursor_stack(self):
+    def pop_cursor_stack(self) -> tuple[int, int, int]:
         """Pops the cursor stack and returns it."""
 
         if len(self.cursor_stack) > 1:
