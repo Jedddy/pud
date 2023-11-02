@@ -128,8 +128,8 @@ class App:
         help_comb = [
             ("up, w", "Move up"),
             ("down, s", "Move down"),
-            ("enter, right, a", "Enter directory"),
-            ("b, left, d", "Go to parent directory"),
+            ("enter, right, d", "Enter directory"),
+            ("b, left, a", "Go to parent directory"),
             ("ctrl + i", "Show information"),
             ("esc, q", "Exit")
         ]
